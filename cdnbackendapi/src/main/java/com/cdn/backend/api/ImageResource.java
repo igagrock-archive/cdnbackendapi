@@ -12,7 +12,6 @@ import javax.ws.rs.core.UriInfo;
 
 import com.cdn.backend.model.ImageModel;
 import com.cdn.backend.model.ImageResponseModel;
-import com.cdn.backend.service.CacheService;
 import com.cdn.backend.service.ImageService;
 
 /**
@@ -24,14 +23,10 @@ import com.cdn.backend.service.ImageService;
 public class ImageResource {
 	
 	   private ImageService service;
-       private CacheService<ImageResponseModel> cs;
-	   
 
 	public ImageResource() {
-		this.service = new ImageService();
-		this.cs = new CacheService<ImageResponseModel>();
+    	this.service = new ImageService();
 	}
-
 
 	@POST
 	public Response processImage(@Context UriInfo uriInfo,
@@ -43,9 +38,10 @@ public class ImageResource {
     	//service would decode String to image
     	//save the image with a random name made with title base64String
     	// return an object {imageresponseModel} with name and url
-
+		
+    
         ImageResponseModel irmodel = service.saveimage(model, uriInfo);
-		return cs.buildResponseWithCacheEtag(request, model.getBase64Image(), irmodel).build();
+		return Response.ok(irmodel).build();
 	}
 	
 
