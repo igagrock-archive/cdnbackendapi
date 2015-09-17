@@ -9,55 +9,36 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.codec.binary.Base64;
 
+import com.cdn.backend.api.ImageResource;
 import com.cdn.backend.model.ErrorModel;
 import com.cdn.backend.model.ImageModel;
 import com.cdn.backend.model.ImageResponseModel;
 
 public class ImageService {
 	
-	/*
-	public static void fetchFromApi(File file) throws IOException{
-		
-		 Client client = ClientBuilder.newClient();
-		   WebTarget target = client.target("http://backendapi-vbr.rhcloud.com/api").path("users").path("irshsheikh").path("articles/107");
-		   System.out.println(target.getUri().toURL().toString());
-		   Invocation.Builder  builder = target.request(MediaType.APPLICATION_JSON);
-		   builder.header("Authorization", "Base "+new String(Base64.encodeBase64("irshsheikh:International0401".getBytes())));
-		   
-		   Response response = builder.get();
-		   System.out.println(response.getStatus());
-		   
-		 //   ArticleModel model = response.readEntity(ArticleModel.class);
-		//    String base64imageString = model.getImage();
-		    System.out.println(base64imageString.split(",")[1]);
-		    
-		    BufferedImage newimage = decodeToImage(base64imageString.split(",")[1]);
-			
-		      ImageIO.write(newimage, "png", file);
-		
-	}*/
+	private final static String PATH_TO_IMAGES = System.getenv("OPENSHIFT_DATA_DIR")+"images";
 	
 	
-	public ImageResponseModel saveimage(ImageModel model,String contextPath){
-	
-		String inPath = System.getenv("OPENSHIFT_DATA_DIR")+"images";
+	public ImageResponseModel saveimage(ImageModel model,UriInfo uriInfo){
+	  
 		String fileName = generateUniquename(model.getTitle());
-		String fullInPath = inPath+fileName;
+		String fullInPath = PATH_TO_IMAGES+fileName;
 		 File file = new File(fullInPath);
 		
 		 try {
 			writeImageToFile(model.getBase64Image(), file);
 		} catch (IOException | IllegalArgumentException e ) {
 			e.printStackTrace();
-			ErrorModel ermodel = new ErrorModel("IOEXCEPTION", 500, "Unable to save the file");
+			ErrorModel ermodel = new ErrorModel("IOEXCEPTION", 501, "Unable to save the file");
 			throw new WebApplicationException(Response.status(501).entity(ermodel).build());
 			
 		}
 
-		 String outPath = contextPath+fileName;
+		 String outPath = getpath(uriInfo)+fileName;
 		 ImageResponseModel imd = new ImageResponseModel();
 		 imd.setName(fileName);
 		 imd.setUrl(outPath);
@@ -134,5 +115,11 @@ public class ImageService {
 		return imageString;
 	}
 
+	private String getpath(UriInfo uriInfo){
+		
+		String path = uriInfo.getBaseUriBuilder().path(ImageResource.class).build().toString().replaceAll("/api", "");
+		System.out.println(path );
+		return path;
+	}
 
 }

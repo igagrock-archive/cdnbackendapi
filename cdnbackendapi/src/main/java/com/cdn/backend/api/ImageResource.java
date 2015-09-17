@@ -6,11 +6,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import com.cdn.backend.model.ImageModel;
 import com.cdn.backend.model.ImageResponseModel;
+import com.cdn.backend.service.CacheService;
 import com.cdn.backend.service.ImageService;
 
 /**
@@ -22,27 +24,28 @@ import com.cdn.backend.service.ImageService;
 public class ImageResource {
 	
 	   private ImageService service;
-  
+       private CacheService<ImageResponseModel> cs;
 	   
 
 	public ImageResource() {
 		this.service = new ImageService();
+		this.cs = new CacheService<ImageResponseModel>();
 	}
 
 
 	@POST
-	public Response processImage(@Context UriInfo uriInfo, ImageModel model){
+	public Response processImage(@Context UriInfo uriInfo,
+									ImageModel model,
+									@Context Request request
+			                          ){
 	  
     	//send model object to service 
     	//service would decode String to image
     	//save the image with a random name made with title base64String
     	// return an object {imageresponseModel} with name and url
-		
-		String path = uriInfo.getBaseUriBuilder().path(ImageResource.class).build().toString().replaceAll("/api", "");
-		System.out.println(path );
-    
-        ImageResponseModel irmodel = service.saveimage(model, path);
-		return Response.ok(irmodel).build();
+
+        ImageResponseModel irmodel = service.saveimage(model, uriInfo);
+		return cs.buildResponseWithCacheEtag(request, model.getBase64Image(), irmodel).build();
 	}
 	
 
