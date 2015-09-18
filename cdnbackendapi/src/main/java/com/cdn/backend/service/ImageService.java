@@ -24,13 +24,16 @@ public class ImageService {
 	
 	
 	public ImageResponseModel saveimage(ImageModel model,UriInfo uriInfo){
-	  
-		String fileName = generateUniquename(model.getTitle());
-		String fullInPath = PATH_TO_IMAGES+fileName;
+	   
+		String fileType = model.getBase64Image().split(":")[1].split(";")[0].split("/")[1];
+		if(fileType == null) fileType = "png";
+		
+		 String fileName = generateUniquename(model.getTitle(),fileType);
+		 String fullInPath = PATH_TO_IMAGES+fileName;
 		 File file = new File(fullInPath);
 		
 		 try {
-			writeImageToFile(model.getBase64Image(), file);
+			writeImageToFile(model.getBase64Image(),fileType,file);
 		} catch (IOException | IllegalArgumentException e ) {
 			e.printStackTrace();
 			ErrorModel ermodel = new ErrorModel("IOEXCEPTION", 501, "Unable to save the file");
@@ -46,7 +49,7 @@ public class ImageService {
 		return imd;
 	}
 	
-	private void writeImageToFile(String base64Image,File file) throws IOException, IllegalArgumentException{
+	private void writeImageToFile(String base64Image,String type,File file) throws IOException, IllegalArgumentException{
 		String newImageString;
 		String[] imageStringarr  = base64Image.split(",");
 		
@@ -57,12 +60,12 @@ public class ImageService {
 	  //decode the image to binary data
 		BufferedImage image = decodeToImage(newImageString);
 		if(image != null)
-		ImageIO.write(image, "png",file );
+		ImageIO.write(image, type,file );
 		else throw new IllegalArgumentException();
 	}
 	
 	//generate the unique name
-	private String generateUniquename(String title){
+	private String generateUniquename(String title,String type){
 		 String[] titlearr = title.split(" ");
 		 String newTitle;
 			if( titlearr != null && titlearr.length > 1)
@@ -70,7 +73,7 @@ public class ImageService {
 			
 			else newTitle = title;
 			
-		 return "/"+newTitle+"_"+System.currentTimeMillis()+".png";
+		 return "/"+newTitle+"_"+System.currentTimeMillis()+"."+type;
 	}
 	private  BufferedImage decodeToImage(String imageString) throws IOException{
 		
