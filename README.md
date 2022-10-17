@@ -1,7 +1,7 @@
-# cdnbackendapi
+# image store
 
 
-- Takes a base64 image
+- input  a base64 image
 - converts it into a jpeg image
 - store it in data folder in openshift server.
 
